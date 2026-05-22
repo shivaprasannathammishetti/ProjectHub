@@ -1,4 +1,4 @@
-const API = 'https://projecthub-backend-scfj.onrender.com/api';
+const API ='https://projecthub-backend-scfj.onrender.com/api';
 fetch('https://projecthub-backend-scfj.onrender.com').catch(() => {});
 // ─── DECLARE ALL VARIABLES FIRST ────────────────────
 let token = localStorage.getItem('token');
