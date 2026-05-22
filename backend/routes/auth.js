@@ -121,8 +121,8 @@ router.get('/google/callback',
       // Redirect to frontend with token & user info in URL
       const userStr = encodeURIComponent(JSON.stringify(user));
       res.redirect(
-        `http://127.0.0.1:5500/frontend/index.html?token=${token}&user=${userStr}`
-      );
+  `https://projecthub-frontend-iota.vercel.app/index.html?token=${token}&user=${userStr}`
+);
     } catch (err) {
       res.redirect('/?error=server_error');
     }
