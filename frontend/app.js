@@ -149,7 +149,7 @@ function showApp() {
   document.getElementById('nav-user').textContent = `👋 ${currentUser.name}`;
 
   try {
-    socket = io('http://127.0.0.1:5000');
+    socket = io('https://projecthub-backend-scfj.onrender.com');
     socket.emit('joinUser', currentUser.id);
     socket.on('newNotification', () => loadNotifications());
   } catch (e) {
@@ -1204,7 +1204,7 @@ async function uploadFile() {
 
 function downloadFile(filename, originalName) {
   const a    = document.createElement('a');
-  a.href     = `http://127.0.0.1:5000/uploads/${filename}`;
+  a.href = `https://projecthub-backend-scfj.onrender.com/uploads/${filename}`;
   a.download = originalName;
   a.target   = '_blank';
   document.body.appendChild(a);
