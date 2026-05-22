@@ -2,10 +2,8 @@ const express  = require('express');
 const router   = express.Router();
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
-const crypto   = require('crypto');
 const passport = require('passport');
 const User     = require('../models/User');
-const { sendVerificationEmail } = require('../config/email');
 
 // ─── REGISTER ───────────────────────────────────────
 router.post('/register', async (req, res) => {
@@ -14,52 +12,23 @@ router.post('/register', async (req, res) => {
 
     const exists = await User.findOne({ email });
     if (exists) {
-      if (!exists.isVerified) {
-        const token = crypto.randomBytes(32).toString('hex');
-        exists.verifyToken = token;
-        exists.verifyTokenExpiry = Date.now() + 24 * 60 * 60 * 1000;
-        await exists.save();
-        await sendVerificationEmail(email, exists.name, token);
-        return res.status(400).json({
-          message: 'Account exists but not verified. Verification email resent!'
-        });
-      }
       return res.status(400).json({ message: 'User already exists with this email!' });
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    const verifyToken = crypto.randomBytes(32).toString('hex');
-    const verifyTokenExpiry = Date.now() + 24 * 60 * 60 * 1000;
 
-    await User.create({ name, email, password: hashed, verifyToken, verifyTokenExpiry });
-    await sendVerificationEmail(email, name, verifyToken);
+    await User.create({ 
+      name, 
+      email, 
+      password: hashed,
+      isVerified: true
+    });
 
     res.status(201).json({
-      message: '✅ Registration successful! Please check your email to verify your account.'
+      message: '✅ Registration successful! You can now login.'
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error: ' + err.message });
-  }
-});
-
-// ─── VERIFY EMAIL ───────────────────────────────────
-router.get('/verify/:token', async (req, res) => {
-  try {
-    const user = await User.findOne({
-      verifyToken: req.params.token,
-      verifyTokenExpiry: { $gt: Date.now() }
-    });
-
-    if (!user) return res.status(400).json({ message: 'Invalid or expired verification link.' });
-
-    user.isVerified = true;
-    user.verifyToken = undefined;
-    user.verifyTokenExpiry = undefined;
-    await user.save();
-
-    res.json({ message: '✅ Email verified successfully! You can now login.' });
-  } catch (err) {
     res.status(500).json({ message: 'Server error: ' + err.message });
   }
 });
@@ -72,7 +41,6 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'No account found with this email!' });
 
-    // Block Google-only users from password login
     if (!user.password) {
       return res.status(400).json({
         message: '⚠️ This account uses Google Sign-In. Please click "Login with Google".'
@@ -100,7 +68,7 @@ router.post('/login', async (req, res) => {
 router.get('/google',
   passport.authenticate('google', {
     scope: ['profile', 'email'],
-    prompt: 'select_account'   // always show account picker
+    prompt: 'select_account'
   })
 );
 
@@ -109,7 +77,6 @@ router.get('/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/?error=google_failed' }),
   (req, res) => {
     try {
-      // Generate JWT for the Google-authenticated user
       const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
       const user = {
@@ -118,11 +85,10 @@ router.get('/google/callback',
         email: req.user.email
       };
 
-      // Redirect to frontend with token & user info in URL
       const userStr = encodeURIComponent(JSON.stringify(user));
       res.redirect(
-  `https://projecthub-frontend-iota.vercel.app/index.html?token=${token}&user=${userStr}`
-);
+        `https://projecthub-frontend-iota.vercel.app/index.html?token=${token}&user=${userStr}`
+      );
     } catch (err) {
       res.redirect('/?error=server_error');
     }
