@@ -1,23 +1,21 @@
-const Brevo = require('@getbrevo/brevo');
- 
-const client = Brevo.ApiClient.instance;
-client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
- 
-const transactionalApi = new Brevo.TransactionalEmailsApi();
- 
+const { TransactionalEmailsApi, SendSmtpEmail, ApiClient } = require('@getbrevo/brevo');
+
+const apiInstance = new TransactionalEmailsApi();
+apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+
 const FROM = {
   email: process.env.BREVO_SENDER_EMAIL || 'shivaprasannathammishetti@gmail.com',
   name:  process.env.BREVO_SENDER_NAME  || 'ProjectHub'
 };
- 
+
 // ─── VERIFICATION EMAIL ──────────────────────────────
 const sendVerificationEmail = async (email, name, token) => {
   const verifyUrl = `${process.env.FRONTEND_URL}/verify.html?token=${token}`;
- 
-  const mail = new Brevo.SendSmtpEmail();
-  mail.sender  = FROM;
-  mail.to      = [{ email, name }];
-  mail.subject = '✅ Verify Your ProjectHub Account';
+
+  const mail = new SendSmtpEmail();
+  mail.sender      = FROM;
+  mail.to          = [{ email, name }];
+  mail.subject     = '✅ Verify Your ProjectHub Account';
   mail.htmlContent = `
     <div style="font-family:Inter,sans-serif;max-width:500px;margin:0 auto;background:#0f172a;color:#e2e8f0;border-radius:16px;overflow:hidden;">
       <div style="background:#6366f1;padding:32px;text-align:center;">
@@ -29,10 +27,7 @@ const sendVerificationEmail = async (email, name, token) => {
         <p style="color:#94a3b8;line-height:1.6;margin-bottom:24px;">
           Thanks for registering on ProjectHub. Please verify your email address to activate your account.
         </p>
-        <a href="${verifyUrl}" style="
-          display:inline-block;background:#6366f1;color:white;
-          padding:14px 32px;border-radius:10px;text-decoration:none;
-          font-weight:600;font-size:15px;margin-bottom:24px;">
+        <a href="${verifyUrl}" style="display:inline-block;background:#6366f1;color:white;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-bottom:24px;">
           ✅ Verify My Email
         </a>
         <p style="color:#475569;font-size:13px;margin-top:24px;">
@@ -45,16 +40,16 @@ const sendVerificationEmail = async (email, name, token) => {
       </div>
     </div>
   `;
- 
-  await transactionalApi.sendTransacEmail(mail);
+
+  await apiInstance.sendTransacEmail(mail);
 };
- 
+
 // ─── INVITE EMAIL ────────────────────────────────────
 const sendInviteEmail = async (toEmail, toName, inviterName, projectName) => {
-  const mail = new Brevo.SendSmtpEmail();
-  mail.sender  = FROM;
-  mail.to      = [{ email: toEmail, name: toName }];
-  mail.subject = `🚀 ${inviterName} invited you to "${projectName}" on ProjectHub`;
+  const mail = new SendSmtpEmail();
+  mail.sender      = FROM;
+  mail.to          = [{ email: toEmail, name: toName }];
+  mail.subject     = `🚀 ${inviterName} invited you to "${projectName}" on ProjectHub`;
   mail.htmlContent = `
     <div style="font-family:Inter,sans-serif;max-width:500px;margin:0 auto;background:#0f172a;color:#e2e8f0;border-radius:16px;overflow:hidden;">
       <div style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);padding:32px;text-align:center;">
@@ -77,10 +72,7 @@ const sendInviteEmail = async (toEmail, toName, inviterName, projectName) => {
           <div style="background:#1e293b;border-radius:8px;padding:10px 16px;color:#94a3b8;font-size:14px;">💬 Add comments and get assigned to tasks</div>
         </div>
         <div style="text-align:center;margin-bottom:24px;">
-          <a href="${process.env.FRONTEND_URL}" style="
-            display:inline-block;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
-            color:white;padding:14px 40px;border-radius:10px;
-            text-decoration:none;font-weight:600;font-size:15px;">
+          <a href="${process.env.FRONTEND_URL}" style="display:inline-block;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);color:white;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
             Open ProjectHub →
           </a>
         </div>
@@ -93,8 +85,8 @@ const sendInviteEmail = async (toEmail, toName, inviterName, projectName) => {
       </div>
     </div>
   `;
- 
-  await transactionalApi.sendTransacEmail(mail);
+
+  await apiInstance.sendTransacEmail(mail);
 };
- 
+
 module.exports = { sendVerificationEmail, sendInviteEmail };
