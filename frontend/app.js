@@ -1,4 +1,4 @@
-const API = 'http://127.0.0.1:5000/api';
+const API = 'https://projecthub-backend-scfj.onrender.com/api';
 
 // ─── DECLARE ALL VARIABLES FIRST ────────────────────
 let token = localStorage.getItem('token');
