@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProjectHub — CodeAlpha</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+
+  <!-- AUTH SECTION -->
+  <div id="auth-section" style="display:flex">
+    <div class="auth-box">
+      <div class="auth-logo"><i class="fas fa-layer-group"></i> ProjectHub</div>
+      <div class="auth-tabs">
+        <button class="tab-btn active" onclick="showTab('login')">Login</button>
+        <button class="tab-btn" onclick="showTab('register')">Register</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="login-form">
+        <input type="email" id="login-email" placeholder="Email" />
+        <input type="password" id="login-password" placeholder="Password" />
+        <button class="btn-primary" onclick="login()">Login</button>
+
+        <!-- Divider -->
+        <div class="oauth-divider"><span>or</span></div>
+
+        <!-- Google Login Button -->
+        <a href="http://localhost:5000/api/auth/google" class="btn-google">
+          <svg width="18" height="18" viewBox="0 0 48 48" style="margin-right:10px">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            <path fill="none" d="M0 0h48v48H0z"/>
+          </svg>
+          Continue with Google
+        </a>
+
+        <p id="login-msg" class="msg"></p>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="register-form" style="display:none">
+        <input type="text" id="reg-name" placeholder="Full Name" />
+        <input type="email" id="reg-email" placeholder="Email" />
+        <input type="password" id="reg-password" placeholder="Password" />
+        <button class="btn-primary" onclick="register()">Register</button>
+
+        <!-- Divider -->
+        <div class="oauth-divider"><span>or</span></div>
+
+        <!-- Google Register Button -->
+        <a href="http://localhost:5000/api/auth/google" class="btn-google">
+          <svg width="18" height="18" viewBox="0 0 48 48" style="margin-right:10px">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            <path fill="none" d="M0 0h48v48H0z"/>
+          </svg>
+          Sign up with Google
+        </a>
+
+        <p id="reg-msg" class="msg"></p>
+      </div>
+    </div>
+  </div>
+  <!-- ─── END auth-section ───────────────────────────── -->
+
+  <!-- MAIN APP -->
+  <div id="app-section" style="display:none">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-logo"><i class="fas fa-layer-group"></i> ProjectHub</div>
+
+      <!-- Global Search Bar -->
+      <div class="global-search-wrapper" id="global-search-wrapper">
+        <div class="global-search-input-wrap">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            id="global-search-input"
+            placeholder="Search projects, tasks, people..."
+            oninput="globalSearch()"
+            onfocus="showSearchPanel()"
+            autocomplete="off"
+          />
+          <button class="btn-search-clear" id="btn-search-clear"
+            onclick="clearGlobalSearch()" style="display:none">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="search-results-panel" id="search-results-panel" style="display:none"></div>
+      </div>
+
+      <div class="nav-right">
+        <span id="nav-user"></span>
+
+        <!-- Theme Toggle -->
+        <button class="btn-theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+          <i id="theme-icon" class="fas fa-sun"></i>
+        </button>
+
+        <!-- Notification Bell -->
+        <div class="notif-wrapper" id="notif-wrapper">
+          <button class="btn-bell" onclick="toggleNotifPanel()" id="bell-btn">
+            <i class="fas fa-bell"></i>
+            <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+          </button>
+          <div class="notif-panel" id="notif-panel" style="display:none">
+            <div class="notif-header">
+              <span><i class="fas fa-bell"></i> Notifications</span>
+              <button class="btn-mark-all" onclick="markAllRead()">Mark all read</button>
+            </div>
+            <div class="notif-list" id="notif-list">
+              <div class="notif-empty">No notifications yet</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-logout" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </nav>
+
+    <!-- ─── DASHBOARD ─────────────────────────────── -->
+    <div id="dashboard-section">
+      <div class="dashboard-header">
+        <h2>My Projects</h2>
+        <button class="btn-primary" onclick="openProjectModal()">
+          <i class="fas fa-plus"></i> New Project
+        </button>
+      </div>
+      <div id="projects-grid" class="projects-grid"></div>
+    </div>
+
+    <!-- ─── PROJECT BOARD ─────────────────────────── -->
+    <div id="board-section" style="display:none">
+      <div class="board-header">
+        <button class="btn-back" onclick="showDashboard()">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <h2 id="board-title"></h2>
+        <span id="role-badge" style="font-size:12px;padding:3px 12px;border-radius:12px;font-weight:600;margin-left:4px"></span>
+        <div class="board-actions">
+          <button class="btn-analytics" onclick="openAnalytics()">
+            <i class="fas fa-chart-bar"></i> Analytics
+          </button>
+          <button id="invite-btn" class="btn-invite" onclick="openInviteModal()">
+            <i class="fas fa-user-plus"></i> Invite
+          </button>
+          <button id="add-task-btn" class="btn-primary" onclick="openTaskModal()">
+            <i class="fas fa-plus"></i> Add Task
+          </button>
+        </div>
+      </div>
+
+      <!-- Members Bar -->
+      <div id="members-bar" class="members-bar"></div>
+
+      <!-- Progress Bar -->
+      <div class="progress-section">
+        <div class="progress-label">
+          <span>Project Progress</span>
+          <span id="progress-text">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Search & Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" id="search-input" placeholder="Search tasks..." oninput="filterTasks()" />
+        </div>
+        <select id="filter-priority" onchange="filterTasks()">
+          <option value="">All Priorities</option>
+          <option value="high">🔴 High</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+        <select id="filter-status" onchange="filterTasks()">
+          <option value="">All Status</option>
+          <option value="todo">To Do</option>
+          <option value="inprogress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+        <button class="btn-clear-filter" onclick="clearFilters()">
+          <i class="fas fa-times"></i> Clear
+        </button>
+      </div>
+
+      <!-- Kanban Columns -->
+      <div class="board-columns">
+        <div class="column">
+          <div class="col-header todo-header">
+            <i class="fas fa-circle"></i> To Do
+            <span class="col-count" id="count-todo">0</span>
+          </div>
+          <div class="col-body" id="tasks-todo"
+               ondragover="allowDrop(event)" ondrop="dropTask(event, 'todo')"></div>
+        </div>
+        <div class="column">
+          <div class="col-header inprogress-header">
+            <i class="fas fa-spinner"></i> In Progress
+            <span class="col-count" id="count-inprogress">0</span>
+          </div>
+          <div class="col-body" id="tasks-inprogress"
+               ondragover="allowDrop(event)" ondrop="dropTask(event, 'inprogress')"></div>
+        </div>
+        <div class="column">
+          <div class="col-header done-header">
+            <i class="fas fa-check-circle"></i> Done
+            <span class="col-count" id="count-done">0</span>
+          </div>
+          <div class="col-body" id="tasks-done"
+               ondragover="allowDrop(event)" ondrop="dropTask(event, 'done')"></div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="activity-panel">
+        <div class="activity-header">
+          <i class="fas fa-history"></i> Activity Log
+        </div>
+        <div id="activity-list" class="activity-list">
+          <p class="activity-empty">No activity yet.</p>
+        </div>
+        <div id="activity-pagination" class="activity-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ─── TASK DETAIL ───────────────────────────── -->
+    <div id="task-section" style="display:none">
+      <div class="board-header">
+        <button class="btn-back" onclick="showBoard()">
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <h2 id="task-detail-title"></h2>
+        <div style="display:flex;gap:10px;">
+          <button id="edit-task-btn" class="btn-edit-task" onclick="openEditModal()">
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          <button id="delete-task-btn" class="btn-delete-task" onclick="deleteCurrentTask()">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+
+      <div class="task-detail-box">
+        <p id="task-detail-desc"></p>
+        <div class="task-meta">
+          <span id="task-detail-status"></span>
+          <span id="task-detail-priority"></span>
+          <span id="task-detail-due"></span>
+          <span id="task-detail-assigned"></span>
+        </div>
+
+        <!-- Assign to member -->
+        <div id="assign-section" class="assign-section">
+          <label class="date-label"><i class="fas fa-user-tag"></i> Assign To Member</label>
+          <select id="assign-select" onchange="assignTask()">
+            <option value="">Unassigned</option>
+          </select>
+        </div>
+
+        <!-- Status Buttons -->
+        <div class="status-btns">
+          <button class="btn-todo"       onclick="updateStatus('todo')">To Do</button>
+          <button class="btn-inprogress" onclick="updateStatus('inprogress')">In Progress</button>
+          <button class="btn-done"       onclick="updateStatus('done')">Done</button>
+        </div>
+
+        <!-- Comments -->
+        <div class="comments-section">
+          <h3><i class="fas fa-comments"></i> Comments</h3>
+          <div id="comments-list"></div>
+          <div class="comment-input">
+            <input type="text" id="comment-text" placeholder="Write a comment..." />
+            <button class="btn-primary" onclick="addComment()">Post</button>
+          </div>
+        </div>
+
+        <!-- Attachments -->
+        <div class="attachments-section">
+          <h3><i class="fas fa-paperclip"></i> Attachments</h3>
+          <div id="attachments-list"></div>
+          <div class="attachment-upload">
+            <label class="btn-upload" for="file-input">
+              <i class="fas fa-cloud-upload-alt"></i> Upload File
+              <input type="file" id="file-input" onchange="uploadFile()" style="display:none"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"/>
+            </label>
+            <span id="upload-status" class="upload-status"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- ─── END app-section ───────────────────────────── -->
+
+  <!-- ─── MODALS ────────────────────────────────────── -->
+
+  <!-- Project Modal -->
+  <div id="project-modal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3><i class="fas fa-folder-plus"></i> Create New Project</h3>
+      <input type="text" id="project-name" placeholder="Project Name" />
+      <input type="text" id="project-desc" placeholder="Description" />
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="createProject()">Create</button>
+        <button class="btn-cancel" onclick="closeProjectModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invite Modal -->
+  <div id="invite-modal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3><i class="fas fa-user-plus"></i> Invite Member</h3>
+      <input type="email" id="invite-email" placeholder="Member's Email Address" />
+      <p id="invite-msg" class="msg"></p>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="inviteMember()">Send Invite</button>
+        <button class="btn-cancel" onclick="closeInviteModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Modal -->
+  <div id="task-modal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3><i class="fas fa-tasks"></i> Add New Task</h3>
+      <input type="text" id="task-title" placeholder="Task Title" />
+      <input type="text" id="task-desc" placeholder="Description" />
+      <select id="task-priority">
+        <option value="low">🟢 Low Priority</option>
+        <option value="medium" selected>🟡 Medium Priority</option>
+        <option value="high">🔴 High Priority</option>
+      </select>
+      <div class="date-wrapper">
+        <label class="date-label"><i class="fas fa-calendar-alt"></i> Due Date</label>
+        <input type="date" id="task-due" />
+      </div>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="createTask()">Add Task</button>
+        <button class="btn-cancel" onclick="closeTaskModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Task Modal -->
+  <div id="edit-modal" class="modal" style="display:none">
+    <div class="modal-box">
+      <h3><i class="fas fa-edit"></i> Edit Task</h3>
+      <input type="text" id="edit-title" placeholder="Task Title" />
+      <input type="text" id="edit-desc" placeholder="Description" />
+      <select id="edit-priority">
+        <option value="low">🟢 Low Priority</option>
+        <option value="medium">🟡 Medium Priority</option>
+        <option value="high">🔴 High Priority</option>
+      </select>
+      <div class="date-wrapper">
+        <label class="date-label"><i class="fas fa-calendar-alt"></i> Due Date</label>
+        <input type="date" id="edit-due" />
+      </div>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics Modal -->
+  <div id="analytics-modal" class="modal" style="display:none">
+    <div class="modal-box analytics-modal-box">
+      <div class="analytics-header">
+        <h3><i class="fas fa-chart-bar"></i> Project Analytics</h3>
+        <button class="analytics-close" onclick="closeAnalytics()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="analytics-stats">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Total Tasks</div>
+        </div>
+        <div class="stat-card stat-done">
+          <div class="stat-value" id="stat-done">0</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card stat-overdue">
+          <div class="stat-value" id="stat-overdue">0</div>
+          <div class="stat-label">Overdue</div>
+        </div>
+        <div class="stat-card stat-rate">
+          <div class="stat-value" id="stat-rate">0%</div>
+          <div class="stat-label">Completion Rate</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="analytics-charts">
+        <div class="chart-box">
+          <h4>Tasks by Status</h4>
+          <canvas id="chart-status"></canvas>
+        </div>
+        <div class="chart-box">
+          <h4>Tasks by Priority</h4>
+          <canvas id="chart-priority"></canvas>
+        </div>
+        <div class="chart-box chart-box-wide">
+          <h4>Completed Tasks — Last 7 Days</h4>
+          <canvas id="chart-timeline"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // ─── THEME TOGGLE ────────────────────────────────
+    function toggleTheme() {
+      const html = document.documentElement;
+      const icon = document.getElementById('theme-icon');
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      icon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+      localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+    (function () {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      const icon = document.getElementById('theme-icon');
+      if (icon) icon.className = saved === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    })();
+  </script>
+</body>
+</html>
