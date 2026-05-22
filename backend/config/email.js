@@ -1,15 +1,12 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  host:   'smtp.gmail.com',
-  port:   587,
-  secure: false,          // false = STARTTLS (works on Render free tier)
+  host:   process.env.EMAIL_HOST || 'smtp-relay.brevo.com',
+  port:   Number(process.env.EMAIL_PORT) || 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false   // prevents TLS cert errors on Render
   }
 });
 
@@ -40,7 +37,7 @@ const sendVerificationEmail = async (email, name, token) => {
           </a>
           <p style="color:#475569;font-size:13px;margin-top:24px;">
             This link expires in <strong style="color:#f87171">24 hours</strong>.<br/>
-            If you didn't register, ignore this email.
+            If you did not register, ignore this email.
           </p>
         </div>
         <div style="background:#1e293b;padding:16px;text-align:center;">
