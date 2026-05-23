@@ -9,17 +9,29 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Test Cloudinary connection on startup
+cloudinary.api.ping()
+  .then(() => console.log('✅ Cloudinary connected successfully'))
+  .catch(err => console.error('❌ Cloudinary connection failed:', JSON.stringify(err)));
+
 // Cloudinary storage — files go to cloud, not disk
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const isImage = file.mimetype.startsWith('image/');
-    return {
-      folder:        'projecthub/attachments',
-      resource_type: isImage ? 'image' : 'raw',
-      public_id:     `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
-      use_filename:  false
-    };
+    try {
+      const isImage = file.mimetype.startsWith('image/');
+      const params = {
+        folder:        'projecthub/attachments',
+        resource_type: isImage ? 'image' : 'raw',
+        public_id:     `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+        use_filename:  false
+      };
+      console.log('[Cloudinary] Upload params:', params);
+      return params;
+    } catch (err) {
+      console.error('[Cloudinary] Params error:', JSON.stringify(err));
+      throw err;
+    }
   }
 });
 
@@ -34,8 +46,13 @@ const fileFilter = (req, file, cb) => {
     'text/plain',
     'application/zip'
   ];
-  if (allowedTypes.includes(file.mimetype)) cb(null, true);
-  else cb(new Error('File type not allowed!'), false);
+  if (allowedTypes.includes(file.mimetype)) {
+    console.log('[Upload] File type allowed:', file.mimetype);
+    cb(null, true);
+  } else {
+    console.error('[Upload] File type rejected:', file.mimetype);
+    cb(new Error('File type not allowed!'), false);
+  }
 };
 
 const upload = multer({
