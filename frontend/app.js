@@ -36,7 +36,31 @@ let activityTotalPages = 1;
     }
   }
 })();
-
+// ─── EMAIL VERIFICATION CALLBACK ────────────────────
+(function handleVerificationCallback() {
+  const params   = new URLSearchParams(window.location.search);
+  const verified = params.get('verified');
+  if (verified === 'true') {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    // Show success on login form
+    setTimeout(() => {
+      const msg = document.getElementById('login-msg');
+      if (msg) {
+        msg.style.color  = '#34d399';
+        msg.textContent  = '✅ Email verified! You can now login.';
+      }
+    }, 100);
+  } else if (verified === 'false') {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(() => {
+      const msg = document.getElementById('login-msg');
+      if (msg) {
+        msg.style.color  = '#f87171';
+        msg.textContent  = '❌ Verification link is invalid or expired.';
+      }
+    }, 100);
+  }
+})();
 // ─── INIT ───────────────────────────────────────────
 window.onload = async () => {
   if (token && currentUser) {

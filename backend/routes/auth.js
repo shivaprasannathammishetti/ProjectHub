@@ -117,22 +117,33 @@ router.post('/register', async (req, res) => {
 });
 
 // ─── VERIFY EMAIL ───────────────────────────────────
+// ─── VERIFY EMAIL ───────────────────────────────────
 router.get('/verify/:token', async (req, res) => {
   try {
     const user = await User.findOne({
       verifyToken:       req.params.token,
       verifyTokenExpiry: { $gt: Date.now() }
     });
-    if (!user) return res.status(400).json({ message: 'Invalid or expired verification link.' });
+
+    if (!user) {
+      // Redirect to frontend with error
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/index.html?verified=false`
+      );
+    }
 
     user.isVerified        = true;
     user.verifyToken       = undefined;
     user.verifyTokenExpiry = undefined;
     await user.save();
 
-    res.json({ message: '✅ Email verified successfully! You can now login.' });
+    // Redirect to frontend with success
+    res.redirect(
+      `${process.env.FRONTEND_URL}/index.html?verified=true`
+    );
+
   } catch (err) {
-    res.status(500).json({ message: 'Server error: ' + err.message });
+    res.redirect(`${process.env.FRONTEND_URL}/index.html?verified=false`);
   }
 });
 
