@@ -12,21 +12,18 @@ const { sendVerificationEmail } = require('../config/email');
 passport.use(new GoogleStrategy({
   clientID:     process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL:  process.env.GOOGLE_CALLBACK_URL   // ← reads from .env, not hardcoded
+  callbackURL:  process.env.GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     const email  = profile.emails[0].value;
     const name   = profile.displayName;
     const avatar = profile.photos[0]?.value;
 
-    // Check if user already exists by googleId
     let user = await User.findOne({ googleId: profile.id });
     if (user) return done(null, user);
 
-    // Check if user exists by email (registered normally before)
     user = await User.findOne({ email });
     if (user) {
-      // Link Google to existing account
       user.googleId   = profile.id;
       user.avatar     = avatar;
       user.isVerified = true;
@@ -34,7 +31,6 @@ passport.use(new GoogleStrategy({
       return done(null, user);
     }
 
-    // Create brand new Google user
     user = await User.create({
       name,
       email,
@@ -64,7 +60,7 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', {
     session: false,
-    failureRedirect: `${process.env.FRONTEND_URL}/index.html?error=google_failed`
+    failureRedirect: `${process.env.FRONTEND_URL}/?error=google_failed`
   }),
   (req, res) => {
     const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -75,7 +71,7 @@ router.get('/google/callback',
       avatar: req.user.avatar || null
     };
     res.redirect(
-      `${process.env.FRONTEND_URL}/index.html?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
+      `${process.env.FRONTEND_URL}/?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`
     );
   }
 );
@@ -117,7 +113,6 @@ router.post('/register', async (req, res) => {
 });
 
 // ─── VERIFY EMAIL ───────────────────────────────────
-// ─── VERIFY EMAIL ───────────────────────────────────
 router.get('/verify/:token', async (req, res) => {
   try {
     const user = await User.findOne({
@@ -126,10 +121,7 @@ router.get('/verify/:token', async (req, res) => {
     });
 
     if (!user) {
-      // Redirect to frontend with error
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/index.html?verified=false`
-      );
+      return res.redirect(`${process.env.FRONTEND_URL}/?verified=false`);
     }
 
     user.isVerified        = true;
@@ -137,13 +129,10 @@ router.get('/verify/:token', async (req, res) => {
     user.verifyTokenExpiry = undefined;
     await user.save();
 
-    // Redirect to frontend with success
-    res.redirect(
-      `${process.env.FRONTEND_URL}/index.html?verified=true`
-    );
+    res.redirect(`${process.env.FRONTEND_URL}/?verified=true`);
 
   } catch (err) {
-    res.redirect(`${process.env.FRONTEND_URL}/index.html?verified=false`);
+    res.redirect(`${process.env.FRONTEND_URL}/?verified=false`);
   }
 });
 
@@ -155,7 +144,6 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'No account found with this email!' });
 
-    // Google-only account — no password set
     if (!user.password) {
       return res.status(400).json({
         message: '⚠️ This account uses Google Sign-In. Please click "Continue with Google".'
