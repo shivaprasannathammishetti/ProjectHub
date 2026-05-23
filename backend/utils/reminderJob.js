@@ -1,15 +1,46 @@
 const cron         = require('node-cron');
+const https        = require('https');
 const Task         = require('../models/Task');
 const Notification = require('../models/Notification');
-const brevo        = require('@getbrevo/brevo');
 
-// ── Brevo API setup ───────────────────────────────────
-const apiInstance = new brevo.TransactionalEmailsApi();
-apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+// ── Helper: send email via Brevo HTTP API ─────────────
+const sendEmail = (to, subject, html) => {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      sender: {
+        name:  process.env.BREVO_SENDER_NAME,
+        email: process.env.BREVO_SENDER_EMAIL
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html
+    });
 
-const FROM = {
-  email: process.env.BREVO_SENDER_EMAIL || 'shivaprasannathammishetti@gmail.com',
-  name:  process.env.BREVO_SENDER_NAME  || 'ProjectHub'
+    const options = {
+      hostname: 'api.brevo.com',
+      path:     '/v3/smtp/email',
+      method:   'POST',
+      headers: {
+        'accept':         'application/json',
+        'api-key':        process.env.BREVO_API_KEY_HTTP,
+        'content-type':   'application/json',
+        'content-length': Buffer.byteLength(body)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) resolve(data);
+        else reject(new Error(`Brevo API error: ${res.statusCode} ${data}`));
+      });
+    });
+
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
 };
 
 // ── Helper: send reminder email ───────────────────────
@@ -33,7 +64,7 @@ async function sendReminderEmail({ to, name, taskTitle, projectName, dueDate, ty
   };
 
   const html = `
-    <div style="font-family:Inter,sans-serif;max-width:520px;margin:0 auto;background:#0f172a;border-radius:16px;overflow:hidden">
+    <div style="font-family:Inter,sans-serif;max-width:520px;margin:auto;background:#0f172a;border-radius:16px;overflow:hidden">
       <div style="background:${colors[type]};padding:24px 32px">
         <h1 style="margin:0;color:#fff;font-size:20px">🗂 ProjectHub</h1>
         <p style="margin:6px 0 0;color:rgba(255,255,255,0.85);font-size:14px">${subjects[type]}</p>
@@ -67,12 +98,7 @@ async function sendReminderEmail({ to, name, taskTitle, projectName, dueDate, ty
   `;
 
   try {
-    const mail = new brevo.SendSmtpEmail();
-    mail.sender      = FROM;
-    mail.to          = [{ email: to, name }];
-    mail.subject     = subjects[type];
-    mail.htmlContent = html;
-    await apiInstance.sendTransacEmail(mail);
+    await sendEmail(to, subjects[type], html);
     console.log(`[Reminder] Email sent to ${to} — ${type}: "${taskTitle}"`);
   } catch (err) {
     console.error(`[Reminder] Email failed for ${to}:`, err.message);
