@@ -4,52 +4,8 @@ const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const crypto   = require('crypto');
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User     = require('../models/User');
 const { sendVerificationEmail } = require('../config/email');
-
-// ─── GOOGLE OAUTH STRATEGY ───────────────────────────
-passport.use(new GoogleStrategy({
-  clientID:     process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL:  process.env.GOOGLE_CALLBACK_URL
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    const email  = profile.emails[0].value;
-    const name   = profile.displayName;
-    const avatar = profile.photos[0]?.value;
-
-    let user = await User.findOne({ googleId: profile.id });
-    if (user) return done(null, user);
-
-    user = await User.findOne({ email });
-    if (user) {
-      user.googleId   = profile.id;
-      user.avatar     = avatar;
-      user.isVerified = true;
-      await user.save();
-      return done(null, user);
-    }
-
-    user = await User.create({
-      name,
-      email,
-      googleId:   profile.id,
-      avatar,
-      isVerified: true
-    });
-
-    return done(null, user);
-  } catch (err) {
-    return done(err, null);
-  }
-}));
-
-passport.serializeUser((user, done) => done(null, user._id));
-passport.deserializeUser(async (id, done) => {
-  try   { done(null, await User.findById(id)); }
-  catch (err) { done(err, null); }
-});
 
 // ─── GOOGLE AUTH — Step 1: redirect to Google ────────
 router.get('/google',
