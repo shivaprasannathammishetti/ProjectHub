@@ -60,12 +60,11 @@ router.delete('/task/:taskId/attachment/:attachmentId', protect, async (req, res
     const attachment = task.attachments.id(req.params.attachmentId);
     if (!attachment) return res.status(404).json({ message: 'Attachment not found' });
 
-    // Delete from Cloudinary
+    // Delete from Cloudinary using 'auto' resource_type
     if (attachment.filename) {
-      const isImage = attachment.mimetype?.startsWith('image/');
       try {
         await cloudinary.uploader.destroy(attachment.filename, {
-          resource_type: isImage ? 'image' : 'raw'
+          resource_type: 'auto'   // ← changed from conditional to 'auto'
         });
       } catch (cloudErr) {
         console.error('Cloudinary delete error:', cloudErr.message);

@@ -19,10 +19,9 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     try {
-      const isImage = file.mimetype.startsWith('image/');
       const params = {
         folder:        'projecthub/attachments',
-        resource_type: isImage ? 'image' : 'raw',
+        resource_type: 'auto',   // ← auto detects image, pdf, raw etc.
         public_id:     `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
         use_filename:  false
       };
