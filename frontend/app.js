@@ -1097,7 +1097,7 @@ function renderAttachments(attachments) {
           <div class="attachment-meta">${size} • ${date}</div>
         </div>
         <div class="attachment-actions">
-          <button class="btn-download" onclick="downloadFile('${a.filename}', '${a.originalName.replace(/'/g, "\\'")}')">
+          <button class="btn-download" onclick="downloadFile('${a.url || a.filename}', '${a.originalName.replace(/'/g, "\\'")}')">
             <i class="fas fa-download"></i>
           </button>
           <button class="btn-attachment-delete" onclick="deleteAttachment('${currentTask._id}', '${a._id}')">
@@ -1147,9 +1147,10 @@ async function uploadFile() {
   }
 }
 
-function downloadFile(filename, originalName) {
+// Replace the downloadFile function in app.js
+function downloadFile(url, originalName) {
   const a    = document.createElement('a');
-  a.href     = `https://projecthub-backend-scfj.onrender.com/uploads/${filename}`;
+  a.href     = url;
   a.download = originalName;
   a.target   = '_blank';
   document.body.appendChild(a);

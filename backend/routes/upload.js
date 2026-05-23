@@ -15,6 +15,13 @@ async function isMember(projectId, userId) {
 // ─── UPLOAD FILE TO TASK ─────────────────────────────
 router.post('/task/:taskId', protect, upload.single('file'), async (req, res) => {
   try {
+    console.log('[Upload] File received:', JSON.stringify(req.file));
+    console.log('[Upload] Cloudinary config:', {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key:    process.env.CLOUDINARY_API_KEY    ? 'SET' : 'MISSING',
+      api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'
+    });
+
     const task = await Task.findById(req.params.taskId);
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
@@ -25,18 +32,18 @@ router.post('/task/:taskId', protect, upload.single('file'), async (req, res) =>
 
     // Cloudinary gives us path (URL) and filename (public_id)
     task.attachments.push({
-      filename:     req.file.filename,       // Cloudinary public_id
+      filename:     req.file.filename,      // Cloudinary public_id
       originalName: req.file.originalname,
       mimetype:     req.file.mimetype,
       size:         req.file.size,
-      url:          req.file.path,           // Cloudinary URL
+      url:          req.file.path,          // Cloudinary URL
       uploadedBy:   req.user.id
     });
 
     await task.save();
     res.json({ message: '✅ File uploaded successfully!', task });
   } catch (err) {
-    console.error('Upload error:', err);
+    console.error('[Upload] Full error:', JSON.stringify(err));
     res.status(500).json({ message: err.message });
   }
 });
@@ -70,6 +77,7 @@ router.delete('/task/:taskId/attachment/:attachmentId', protect, async (req, res
 
     res.json({ message: 'Attachment deleted', task });
   } catch (err) {
+    console.error('[Delete] Full error:', JSON.stringify(err));
     res.status(500).json({ message: err.message });
   }
 });
