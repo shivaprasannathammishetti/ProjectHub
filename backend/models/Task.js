@@ -14,10 +14,11 @@ const taskSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now }
   }],
   attachments: [{
-    filename:     { type: String },
+    filename:     { type: String },   // Cloudinary public_id
     originalName: { type: String },
     mimetype:     { type: String },
     size:         { type: Number },
+    url:          { type: String },   // ← Cloudinary URL (new)
     uploadedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     uploadedAt:   { type: Date, default: Date.now }
   }]
