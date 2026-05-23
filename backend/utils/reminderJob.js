@@ -1,10 +1,10 @@
-const cron        = require('node-cron');
-const Task        = require('../models/Task');
+const cron         = require('node-cron');
+const Task         = require('../models/Task');
 const Notification = require('../models/Notification');
-const { TransactionalEmailsApi, SendSmtpEmail } = require('@getbrevo/brevo');
+const brevo        = require('@getbrevo/brevo');
 
 // ── Brevo API setup ───────────────────────────────────
-const apiInstance = new TransactionalEmailsApi();
+const apiInstance = new brevo.TransactionalEmailsApi();
 apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 
 const FROM = {
@@ -67,7 +67,7 @@ async function sendReminderEmail({ to, name, taskTitle, projectName, dueDate, ty
   `;
 
   try {
-    const mail = new SendSmtpEmail();
+    const mail = new brevo.SendSmtpEmail();
     mail.sender      = FROM;
     mail.to          = [{ email: to, name }];
     mail.subject     = subjects[type];
@@ -115,7 +115,6 @@ async function checkDueDates(io) {
     .populate('project',    'name');
 
     console.log(`[Reminder] Found ${tasks.length} tasks to check`);
-
     let remindersCount = 0;
 
     for (const task of tasks) {
