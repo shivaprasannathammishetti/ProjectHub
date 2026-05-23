@@ -58,7 +58,15 @@ app.use('/api/upload',        require('./routes/upload'));
 
 // ── Health check ───────────────────────────────────────
 app.get('/', (req, res) => res.send('Project Management API is running...'));
-
+app.get('/test-cloudinary', async (req, res) => {
+  const cloudinary = require('cloudinary').v2;
+  try {
+    const result = await cloudinary.api.ping();
+    res.json({ status: 'ok', result });
+  } catch (err) {
+    res.json({ status: 'error', message: err.message });
+  }
+});
 // ── Socket.io ──────────────────────────────────────────
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
