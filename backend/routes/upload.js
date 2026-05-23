@@ -13,7 +13,15 @@ async function isMember(projectId, userId) {
 }
 
 // ─── UPLOAD FILE TO TASK ─────────────────────────────
-router.post('/task/:taskId', protect, upload.single('file'), async (req, res) => {
+router.post('/task/:taskId', protect, (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      console.error('[Upload Multer Error]:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+      return res.status(500).json({ message: err.message || 'Upload failed' });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     console.log('[Upload] File received:', JSON.stringify(req.file));
     console.log('[Upload] Cloudinary config:', {
@@ -30,20 +38,19 @@ router.post('/task/:taskId', protect, upload.single('file'), async (req, res) =>
 
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
-    // Cloudinary gives us path (URL) and filename (public_id)
     task.attachments.push({
-      filename:     req.file.filename,      // Cloudinary public_id
+      filename:     req.file.filename,
       originalName: req.file.originalname,
       mimetype:     req.file.mimetype,
       size:         req.file.size,
-      url:          req.file.path,          // Cloudinary URL
+      url:          req.file.path,
       uploadedBy:   req.user.id
     });
 
     await task.save();
     res.json({ message: '✅ File uploaded successfully!', task });
   } catch (err) {
-    console.error('[Upload] Full error:', JSON.stringify(err));
+    console.error('[Upload] Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
     res.status(500).json({ message: err.message });
   }
 });
@@ -60,14 +67,13 @@ router.delete('/task/:taskId/attachment/:attachmentId', protect, async (req, res
     const attachment = task.attachments.id(req.params.attachmentId);
     if (!attachment) return res.status(404).json({ message: 'Attachment not found' });
 
-    // Delete from Cloudinary using 'auto' resource_type
     if (attachment.filename) {
       try {
         await cloudinary.uploader.destroy(attachment.filename, {
-          resource_type: 'auto'   // ← changed from conditional to 'auto'
+          resource_type: 'auto'
         });
       } catch (cloudErr) {
-        console.error('Cloudinary delete error:', cloudErr.message);
+        console.error('Cloudinary delete error:', JSON.stringify(cloudErr, Object.getOwnPropertyNames(cloudErr)));
       }
     }
 
@@ -76,7 +82,7 @@ router.delete('/task/:taskId/attachment/:attachmentId', protect, async (req, res
 
     res.json({ message: 'Attachment deleted', task });
   } catch (err) {
-    console.error('[Delete] Full error:', JSON.stringify(err));
+    console.error('[Delete] Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
     res.status(500).json({ message: err.message });
   }
 });

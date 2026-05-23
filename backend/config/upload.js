@@ -12,23 +12,23 @@ cloudinary.config({
 // Test Cloudinary connection on startup
 cloudinary.api.ping()
   .then(() => console.log('✅ Cloudinary connected successfully'))
-  .catch(err => console.error('❌ Cloudinary connection failed:', JSON.stringify(err)));
+  .catch(err => console.error('❌ Cloudinary connection failed:', JSON.stringify(err, Object.getOwnPropertyNames(err))));
 
-// Cloudinary storage — files go to cloud, not disk
+// Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     try {
       const params = {
         folder:        'projecthub/attachments',
-        resource_type: 'auto',   // ← auto detects image, pdf, raw etc.
+        resource_type: 'auto',
         public_id:     `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
         use_filename:  false
       };
-      console.log('[Cloudinary] Upload params:', params);
+      console.log('[Cloudinary] Upload params:', JSON.stringify(params));
       return params;
     } catch (err) {
-      console.error('[Cloudinary] Params error:', JSON.stringify(err));
+      console.error('[Cloudinary] Params error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
       throw err;
     }
   }
@@ -57,7 +57,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }  // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 module.exports = { upload, cloudinary };
