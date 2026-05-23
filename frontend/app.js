@@ -1,12 +1,13 @@
-const API ='https://projecthub-backend-scfj.onrender.com/api';
+const API = 'https://projecthub-backend-scfj.onrender.com/api';
 fetch('https://projecthub-backend-scfj.onrender.com').catch(() => {});
+
 // ─── DECLARE ALL VARIABLES FIRST ────────────────────
 let token = localStorage.getItem('token');
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 let currentProject = null;
 let currentProjectMembers = [];
 let currentTask = null;
-let currentUserRole = null;   // 'owner' or 'member'
+let currentUserRole = null;
 let socket = null;
 let draggedTaskId = null;
 let allTasks = [];
@@ -18,7 +19,6 @@ let activityTotalPages = 1;
   const params     = new URLSearchParams(window.location.search);
   const oauthToken = params.get('token');
   const oauthUser  = params.get('user');
-
   if (oauthToken && oauthUser) {
     try {
       token       = oauthToken;
@@ -36,31 +36,26 @@ let activityTotalPages = 1;
     }
   }
 })();
+
 // ─── EMAIL VERIFICATION CALLBACK ────────────────────
 (function handleVerificationCallback() {
   const params   = new URLSearchParams(window.location.search);
   const verified = params.get('verified');
   if (verified === 'true') {
     window.history.replaceState({}, document.title, window.location.pathname);
-    // Show success on login form
     setTimeout(() => {
       const msg = document.getElementById('login-msg');
-      if (msg) {
-        msg.style.color  = '#34d399';
-        msg.textContent  = '✅ Email verified! You can now login.';
-      }
+      if (msg) { msg.style.color = '#34d399'; msg.textContent = '✅ Email verified! You can now login.'; }
     }, 100);
   } else if (verified === 'false') {
     window.history.replaceState({}, document.title, window.location.pathname);
     setTimeout(() => {
       const msg = document.getElementById('login-msg');
-      if (msg) {
-        msg.style.color  = '#f87171';
-        msg.textContent  = '❌ Verification link is invalid or expired.';
-      }
+      if (msg) { msg.style.color = '#f87171'; msg.textContent = '❌ Verification link is invalid or expired.'; }
     }, 100);
   }
 })();
+
 // ─── INIT ───────────────────────────────────────────
 window.onload = async () => {
   if (token && currentUser) {
@@ -115,11 +110,7 @@ async function register() {
       body: JSON.stringify({ name, email, password })
     });
     const data = await res.json();
-    if (!res.ok) {
-      msg.style.color = '#f87171';
-      msg.textContent = data.message;
-      return;
-    }
+    if (!res.ok) { msg.style.color = '#f87171'; msg.textContent = data.message; return; }
     msg.style.color = '#34d399';
     msg.textContent = '✅ Registered! Please check your email to verify your account.';
     document.getElementById('reg-name').value     = '';
@@ -171,7 +162,6 @@ function showApp() {
   document.getElementById('auth-section').style.display = 'none';
   document.getElementById('app-section').style.display  = 'block';
   document.getElementById('nav-user').textContent = `👋 ${currentUser.name}`;
-
   try {
     socket = io('https://projecthub-backend-scfj.onrender.com');
     socket.emit('joinUser', currentUser.id);
@@ -179,7 +169,6 @@ function showApp() {
   } catch (e) {
     console.error('Socket error:', e);
   }
-
   showDashboard();
   loadNotifications();
 }
@@ -213,7 +202,6 @@ async function loadProjects() {
       grid.innerHTML = `<div class="empty-state"><i class="fas fa-folder-open"></i><p>No projects yet. Create your first project!</p></div>`;
       return;
     }
-
     const projectsWithProgress = await Promise.all(projects.map(async p => {
       try {
         const pr = await fetch(`${API}/projects/${p._id}/progress`, {
@@ -226,7 +214,6 @@ async function loadProjects() {
         return { ...p, progress: { percent: 0, total: 0, done: 0 } };
       }
     }));
-
     grid.innerHTML = projectsWithProgress.map(p => {
       const percent = p.progress?.percent || 0;
       const members = (p.members || []).map(m => m.user || m).filter(Boolean);
@@ -236,13 +223,11 @@ async function loadProjects() {
       }).join('');
       const extraMembers = members.length > 4
         ? `<div class="member-avatar" style="background:#475569">+${members.length - 4}</div>` : '';
-
       const myMembership = (p.members || []).find(m => {
         const uid = m.user?._id || m.user;
         return uid?.toString() === currentUser.id;
       });
       const iAmOwner = myMembership?.role === 'owner';
-
       return `
         <div class="project-card" onclick="openProject('${p._id}', '${p.name.replace(/'/g, "\\'")}')">
           <h3>
@@ -280,13 +265,11 @@ async function loadProjects() {
 function openProjectModal() {
   document.getElementById('project-modal').style.display = 'flex';
 }
-
 function closeProjectModal() {
   document.getElementById('project-modal').style.display = 'none';
   document.getElementById('project-name').value = '';
   document.getElementById('project-desc').value = '';
 }
-
 async function createProject() {
   const name        = document.getElementById('project-name').value;
   const description = document.getElementById('project-desc').value;
@@ -305,7 +288,6 @@ async function createProject() {
     alert('Failed to create project.');
   }
 }
-
 async function deleteProject(id) {
   if (!confirm('Delete this project?')) return;
   try {
@@ -334,16 +316,12 @@ async function fetchAndApplyRole(projectId) {
     console.error('Failed to fetch role', err);
   }
 }
-
 function applyRolePermissions() {
   const isOwner = currentUserRole === 'owner';
-
   const addTaskBtn = document.getElementById('add-task-btn');
   if (addTaskBtn) addTaskBtn.style.display = isOwner ? 'inline-flex' : 'none';
-
   const inviteBtn = document.getElementById('invite-btn');
   if (inviteBtn) inviteBtn.style.display = isOwner ? 'inline-flex' : 'none';
-
   const roleBadge = document.getElementById('role-badge');
   if (roleBadge) {
     roleBadge.textContent    = isOwner ? '👑 Owner' : '👤 Member';
@@ -358,11 +336,9 @@ function openInviteModal() {
   document.getElementById('invite-email').value         = '';
   document.getElementById('invite-msg').textContent     = '';
 }
-
 function closeInviteModal() {
   document.getElementById('invite-modal').style.display = 'none';
 }
-
 async function inviteMember() {
   const email = document.getElementById('invite-email').value;
   const msg   = document.getElementById('invite-msg');
@@ -376,11 +352,7 @@ async function inviteMember() {
       body: JSON.stringify({ email })
     });
     const data = await res.json();
-    if (!res.ok) {
-      msg.style.color = '#f87171';
-      msg.textContent = data.message;
-      return;
-    }
+    if (!res.ok) { msg.style.color = '#f87171'; msg.textContent = data.message; return; }
     msg.style.color = '#34d399';
     msg.textContent = data.message;
     setTimeout(() => { closeInviteModal(); loadMembers(); loadProjects(); }, 1500);
@@ -401,7 +373,13 @@ function openProject(id, name) {
   if (socket) {
     socket.emit('joinProject', id);
     socket.off('taskUpdated');
-    socket.on('taskUpdated', () => { loadTasks(); loadProgress(); loadActivity(); });
+    socket.on('taskUpdated', (data) => {
+      if (data.projectId === currentProject) {
+        loadTasks();
+        loadProgress();
+        loadActivity();
+      }
+    });
   }
   loadMembers();
   loadTasks();
@@ -431,7 +409,6 @@ async function loadMembers() {
       ...(m.user || m),
       role: m.role
     }));
-
     const bar = document.getElementById('members-bar');
     if (!bar) return;
     bar.innerHTML = `<span class="members-bar-title"><i class="fas fa-users"></i> Members:</span>` +
@@ -492,29 +469,23 @@ function renderTasks(tasks) {
     const el = document.getElementById(`count-${s}`);
     if (el) el.textContent = '0';
   });
-
   if (!tasks.length) {
     document.getElementById('tasks-todo').innerHTML =
       '<div class="empty-state"><i class="fas fa-clipboard"></i><p>No tasks yet</p></div>';
     return;
   }
-
   const counts = { todo: 0, inprogress: 0, done: 0 };
-
   tasks.forEach(task => {
     const col = document.getElementById(`tasks-${task.status}`);
     if (!col) return;
     counts[task.status] = (counts[task.status] || 0) + 1;
-
     const card = document.createElement('div');
     card.className  = 'task-card';
     card.draggable  = true;
     card.dataset.id = task._id;
-
     const priorityColors = { high: 'badge-high', medium: 'badge-medium', low: 'badge-low' };
     const priorityEmoji  = { high: '🔴', medium: '🟡', low: '🟢' };
     const priority = task.priority || 'medium';
-
     let dueHTML = '';
     if (task.dueDate) {
       const due       = new Date(task.dueDate);
@@ -524,12 +495,10 @@ function renderTasks(tasks) {
         <i class="fas fa-calendar"></i> ${formatted}
       </span>`;
     }
-
     const assignedHTML = task.assignedTo
       ? `<span style="font-size:11px;color:#94a3b8;margin-top:4px;display:block">
            <i class="fas fa-user"></i> ${task.assignedTo.name}
          </span>` : '';
-
     card.innerHTML = `
       <h4>${task.title}</h4>
       <p>${task.description || ''}</p>
@@ -539,7 +508,6 @@ function renderTasks(tasks) {
       </div>
       ${assignedHTML}
     `;
-
     card.addEventListener('dragstart', () => {
       draggedTaskId = task._id;
       card.classList.add('dragging');
@@ -551,7 +519,6 @@ function renderTasks(tasks) {
     card.addEventListener('click', () => openTask(task));
     col.appendChild(card);
   });
-
   Object.keys(counts).forEach(status => {
     const el = document.getElementById(`count-${status}`);
     if (el) el.textContent = counts[status];
@@ -563,22 +530,18 @@ function filterTasks() {
   const search   = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
   const priority = document.getElementById('filter-priority')?.value || '';
   const status   = document.getElementById('filter-status')?.value || '';
-
   const filtered = allTasks.filter(task => {
     const matchSearch   = !search   || task.title.toLowerCase().includes(search) || (task.description || '').toLowerCase().includes(search);
     const matchPriority = !priority || task.priority === priority;
     const matchStatus   = !status   || task.status   === status;
     return matchSearch && matchPriority && matchStatus;
   });
-
   renderTasks(filtered);
-
   if (filtered.length === 0 && allTasks.length > 0) {
     document.getElementById('tasks-todo').innerHTML =
       '<div class="no-results"><i class="fas fa-search" style="font-size:24px;margin-bottom:8px;display:block"></i>No tasks match your filter.</div>';
   }
 }
-
 function clearFilters() {
   const s  = document.getElementById('search-input');
   const p  = document.getElementById('filter-priority');
@@ -594,7 +557,6 @@ function allowDrop(e) {
   e.preventDefault();
   e.currentTarget.classList.add('drag-over');
 }
-
 async function dropTask(e, newStatus) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
@@ -607,14 +569,15 @@ async function dropTask(e, newStatus) {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ status: newStatus })
     });
+    loadTasks();
+    loadProgress();
+    loadActivity();
     if (socket) socket.emit('taskUpdated', { projectId: currentProject });
-    else { loadTasks(); loadProgress(); loadActivity(); }
   } catch (err) {
     alert('Failed to update task.');
     loadTasks();
   }
 }
-
 document.addEventListener('dragleave', (e) => {
   if (e.target.classList.contains('col-body')) {
     e.target.classList.remove('drag-over');
@@ -625,7 +588,6 @@ document.addEventListener('dragleave', (e) => {
 function openTaskModal() {
   document.getElementById('task-modal').style.display = 'flex';
 }
-
 function closeTaskModal() {
   document.getElementById('task-modal').style.display    = 'none';
   document.getElementById('task-title').value            = '';
@@ -633,7 +595,6 @@ function closeTaskModal() {
   document.getElementById('task-priority').value         = 'medium';
   document.getElementById('task-due').value              = '';
 }
-
 async function createTask() {
   const title       = document.getElementById('task-title').value;
   const description = document.getElementById('task-desc').value;
@@ -649,8 +610,10 @@ async function createTask() {
     const data = await res.json();
     if (!res.ok) return alert(data.message);
     closeTaskModal();
+    loadTasks();
+    loadProgress();
+    loadActivity();
     if (socket) socket.emit('taskUpdated', { projectId: currentProject });
-    else { loadTasks(); loadProgress(); loadActivity(); }
   } catch (err) {
     alert('Failed to create task.');
   }
@@ -669,11 +632,9 @@ function openEditModal() {
     ? new Date(currentTask.dueDate).toISOString().split('T')[0] : '';
   document.getElementById('edit-modal').style.display = 'flex';
 }
-
 function closeEditModal() {
   document.getElementById('edit-modal').style.display = 'none';
 }
-
 async function saveEdit() {
   const title       = document.getElementById('edit-title').value;
   const description = document.getElementById('edit-desc').value;
@@ -716,10 +677,8 @@ function openTask(task) {
     task.dueDate ? `📅 ${new Date(task.dueDate).toLocaleDateString('en-IN')}` : '📅 No due date';
   document.getElementById('task-detail-assigned').textContent =
     task.assignedTo ? `👤 ${task.assignedTo.name}` : '👤 Unassigned';
-
   const assignSection = document.getElementById('assign-section');
   if (assignSection) assignSection.style.display = currentUserRole === 'owner' ? 'block' : 'none';
-
   const select = document.getElementById('assign-select');
   if (select) {
     select.innerHTML = '<option value="">Unassigned</option>' +
@@ -727,15 +686,11 @@ function openTask(task) {
         `<option value="${m._id}" ${task.assignedTo?._id === m._id ? 'selected' : ''}>${m.name}</option>`
       ).join('');
   }
-
   const deleteBtn = document.getElementById('delete-task-btn');
   if (deleteBtn) deleteBtn.style.display = currentUserRole === 'owner' ? 'inline-flex' : 'none';
-
   const editBtn = document.getElementById('edit-task-btn');
   if (editBtn) editBtn.style.display = currentUserRole === 'owner' ? 'inline-flex' : 'none';
-
   renderAttachments(task.attachments || []);
-
   const commentsList = document.getElementById('comments-list');
   commentsList.innerHTML = task.comments?.length
     ? task.comments.map(c => `<div class="comment-item">💬 ${c.text}</div>`).join('')
@@ -825,17 +780,14 @@ async function loadActivity(page = 1) {
     const activities = Array.isArray(data.activities) ? data.activities : [];
     const pagination = data.pagination || { page: 1, totalPages: 1, hasNext: false, hasPrev: false };
     activityTotalPages = pagination.totalPages;
-
     const list = document.getElementById('activity-list');
     const pag  = document.getElementById('activity-pagination');
     if (!list) return;
-
     if (!activities.length && page === 1) {
       list.innerHTML = '<p class="activity-empty">No activity yet.</p>';
       if (pag) pag.innerHTML = '';
       return;
     }
-
     list.innerHTML = activities.map(a => {
       const initials = a.user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
       const time     = new Date(a.createdAt).toLocaleString('en-IN', {
@@ -847,7 +799,6 @@ async function loadActivity(page = 1) {
         'deleted task':      '🗑️',
         'commented on task': '💬'
       }[a.action] || '📌';
-
       return `
         <div class="activity-item">
           <div class="activity-avatar">${initials}</div>
@@ -860,7 +811,6 @@ async function loadActivity(page = 1) {
           <div class="activity-time">${time}</div>
         </div>`;
     }).join('');
-
     if (pag) {
       pag.innerHTML = `
         <button class="pag-btn" onclick="loadActivity(${page - 1})" ${!pagination.hasPrev ? 'disabled' : ''}>
@@ -897,19 +847,16 @@ async function loadNotifications() {
 function renderNotifications(notifications) {
   const list = document.getElementById('notif-list');
   if (!list) return;
-
   if (!notifications.length) {
     list.innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash" style="font-size:24px;display:block;margin-bottom:8px"></i>No notifications yet</div>';
     return;
   }
-
   const typeIcons = {
     task_assigned:  'fa-user-check',
     comment_added:  'fa-comment',
     task_moved:     'fa-arrows-alt',
     member_invited: 'fa-user-plus'
   };
-
   list.innerHTML = notifications.map(n => `
     <div class="notif-item ${n.isRead ? '' : 'unread'}" id="notif-${n._id}">
       <div class="notif-icon ${n.type}">
@@ -1016,7 +963,7 @@ function showSearchPanel() {
 }
 
 function clearGlobalSearch() {
-  document.getElementById('global-search-input').value         = '';
+  document.getElementById('global-search-input').value          = '';
   document.getElementById('search-results-panel').style.display = 'none';
   document.getElementById('btn-search-clear').style.display     = 'none';
 }
@@ -1025,17 +972,10 @@ function globalSearch() {
   const q        = document.getElementById('global-search-input').value.trim();
   const panel    = document.getElementById('search-results-panel');
   const clearBtn = document.getElementById('btn-search-clear');
-
   clearBtn.style.display = q.length > 0 ? 'flex' : 'none';
-
-  if (q.length < 2) {
-    panel.style.display = 'none';
-    return;
-  }
-
+  if (q.length < 2) { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
   panel.innerHTML     = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
-
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => performSearch(q), 400);
 }
@@ -1047,7 +987,6 @@ async function performSearch(q) {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const data = await res.json();
-
     if (data.total === 0) {
       panel.innerHTML = `
         <div class="search-empty">
@@ -1056,9 +995,7 @@ async function performSearch(q) {
         </div>`;
       return;
     }
-
     let html = '';
-
     if (data.projects.length > 0) {
       html += '<div class="search-section-title"><i class="fas fa-folder"></i> Projects</div>';
       html += data.projects.map(p => `
@@ -1071,7 +1008,6 @@ async function performSearch(q) {
         </div>
       `).join('');
     }
-
     if (data.tasks.length > 0) {
       html += '<div class="search-section-title"><i class="fas fa-tasks"></i> Tasks</div>';
       html += data.tasks.map(t => `
@@ -1085,7 +1021,6 @@ async function performSearch(q) {
         </div>
       `).join('');
     }
-
     if (data.users.length > 0) {
       html += '<div class="search-section-title"><i class="fas fa-users"></i> People</div>';
       html += data.users.map(u => {
@@ -1101,9 +1036,7 @@ async function performSearch(q) {
         `;
       }).join('');
     }
-
     panel.innerHTML = html;
-
   } catch (err) {
     panel.innerHTML = '<div class="search-empty">Search failed. Try again.</div>';
   }
@@ -1148,34 +1081,26 @@ function formatFileSize(bytes) {
 function renderAttachments(attachments) {
   const list = document.getElementById('attachments-list');
   if (!list) return;
-
   if (!attachments || !attachments.length) {
     list.innerHTML = '<p style="color:var(--text-faint);font-size:13px;margin-bottom:8px">No attachments yet.</p>';
     return;
   }
-
   list.innerHTML = attachments.map(a => {
     const { icon, cls } = getFileIcon(a.mimetype);
     const size = formatFileSize(a.size);
-    const date = new Date(a.uploadedAt).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'short'
-    });
+    const date = new Date(a.uploadedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     return `
       <div class="attachment-item" id="attachment-${a._id}">
-        <div class="attachment-icon ${cls}">
-          <i class="fas ${icon}"></i>
-        </div>
+        <div class="attachment-icon ${cls}"><i class="fas ${icon}"></i></div>
         <div class="attachment-info">
           <div class="attachment-name" title="${a.originalName}">${a.originalName}</div>
           <div class="attachment-meta">${size} • ${date}</div>
         </div>
         <div class="attachment-actions">
-          <button class="btn-download"
-            onclick="downloadFile('${a.filename}', '${a.originalName.replace(/'/g, "\\'")}')">
+          <button class="btn-download" onclick="downloadFile('${a.filename}', '${a.originalName.replace(/'/g, "\\'")}')">
             <i class="fas fa-download"></i>
           </button>
-          <button class="btn-attachment-delete"
-            onclick="deleteAttachment('${currentTask._id}', '${a._id}')">
+          <button class="btn-attachment-delete" onclick="deleteAttachment('${currentTask._id}', '${a._id}')">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -1188,20 +1113,16 @@ async function uploadFile() {
   const input  = document.getElementById('file-input');
   const status = document.getElementById('upload-status');
   if (!input.files[0]) return;
-
   const file = input.files[0];
   if (file.size > 5 * 1024 * 1024) {
     status.className  = 'upload-status error';
     status.textContent = '❌ File too large! Max 5MB.';
     return;
   }
-
   status.className  = 'upload-status loading';
   status.textContent = '⏳ Uploading...';
-
   const formData = new FormData();
   formData.append('file', file);
-
   try {
     const res  = await fetch(`${API}/upload/task/${currentTask._id}`, {
       method: 'POST',
@@ -1228,7 +1149,7 @@ async function uploadFile() {
 
 function downloadFile(filename, originalName) {
   const a    = document.createElement('a');
-  a.href = `https://projecthub-backend-scfj.onrender.com/uploads/${filename}`;
+  a.href     = `https://projecthub-backend-scfj.onrender.com/uploads/${filename}`;
   a.download = originalName;
   a.target   = '_blank';
   document.body.appendChild(a);
@@ -1266,20 +1187,16 @@ async function openAnalytics() {
     });
     if (!res.ok) return;
     const data = await res.json();
-
     document.getElementById('stat-total').textContent   = data.total;
     document.getElementById('stat-done').textContent    = data.done;
     document.getElementById('stat-overdue').textContent = data.overdue;
     document.getElementById('stat-rate').textContent    = `${data.completionRate}%`;
-
     if (chartStatus)   { chartStatus.destroy();   chartStatus   = null; }
     if (chartPriority) { chartPriority.destroy(); chartPriority = null; }
     if (chartTimeline) { chartTimeline.destroy(); chartTimeline = null; }
-
     const isDark     = document.documentElement.getAttribute('data-theme') !== 'light';
     const gridColor  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
     const labelColor = isDark ? '#94a3b8' : '#64748b';
-
     chartStatus = new Chart(document.getElementById('chart-status'), {
       type: 'doughnut',
       data: {
@@ -1287,21 +1204,14 @@ async function openAnalytics() {
         datasets: [{
           data: [data.byStatus.todo, data.byStatus.inprogress, data.byStatus.done],
           backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
-          borderWidth: 0,
-          hoverOffset: 6
+          borderWidth: 0, hoverOffset: 6
         }]
       },
       options: {
         responsive: true,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: { color: labelColor, padding: 16, font: { size: 12 } }
-          }
-        }
+        plugins: { legend: { position: 'bottom', labels: { color: labelColor, padding: 16, font: { size: 12 } } } }
       }
     });
-
     chartPriority = new Chart(document.getElementById('chart-priority'), {
       type: 'bar',
       data: {
@@ -1310,27 +1220,18 @@ async function openAnalytics() {
           label: 'Tasks',
           data: [data.byPriority.low, data.byPriority.medium, data.byPriority.high],
           backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-          borderRadius: 8,
-          borderSkipped: false
+          borderRadius: 8, borderSkipped: false
         }]
       },
       options: {
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: labelColor, stepSize: 1 },
-            grid:  { color: gridColor }
-          },
-          x: {
-            ticks: { color: labelColor },
-            grid:  { display: false }
-          }
+          y: { beginAtZero: true, ticks: { color: labelColor, stepSize: 1 }, grid: { color: gridColor } },
+          x: { ticks: { color: labelColor }, grid: { display: false } }
         }
       }
     });
-
     chartTimeline = new Chart(document.getElementById('chart-timeline'), {
       type: 'line',
       data: {
@@ -1340,30 +1241,20 @@ async function openAnalytics() {
           data: data.last7Days.map(d => d.count),
           borderColor: '#6366f1',
           backgroundColor: 'rgba(99,102,241,0.1)',
-          tension: 0.4,
-          fill: true,
+          tension: 0.4, fill: true,
           pointBackgroundColor: '#6366f1',
-          pointRadius: 5,
-          pointHoverRadius: 7
+          pointRadius: 5, pointHoverRadius: 7
         }]
       },
       options: {
         responsive: true,
         plugins: { legend: { display: false } },
         scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: labelColor, stepSize: 1 },
-            grid:  { color: gridColor }
-          },
-          x: {
-            ticks: { color: labelColor },
-            grid:  { display: false }
-          }
+          y: { beginAtZero: true, ticks: { color: labelColor, stepSize: 1 }, grid: { color: gridColor } },
+          x: { ticks: { color: labelColor }, grid: { display: false } }
         }
       }
     });
-
   } catch (err) {
     console.error('Analytics error:', err);
   }
